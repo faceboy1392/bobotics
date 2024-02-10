@@ -65,13 +65,94 @@ enum AutonType
 	NONE
 };
 
+AutonType selectedAuton = SKILLS;
+
 void auton_selector()
 {
-	// draw field to the screen
+	LV_IMG_DECLARE(field);	
+
+	// create an lvgl image at the top left corner of the screen, from a file
+	lv_obj_t *img1 = lv_img_create(lv_scr_act(), NULL);
+	lv_img_set_src(img1, &field);
+	lv_obj_set_pos(img1, 0, 0);
+
+	// text that says "AUTON SKILLS" centered in the top rightmost 240x120 region
+	lv_obj_t *label1 = lv_label_create(lv_scr_act(), NULL);
+	lv_label_set_text(label1, "AUTON SKILLS");
+	lv_obj_align(label1, NULL, LV_ALIGN_CENTER, 120, -60);
+
+	// similar text in bottom right that says "NONE"
+	lv_obj_t *label2 = lv_label_create(lv_scr_act(), NULL);
+	lv_label_set_text(label2, "NONE");
+	lv_obj_align(label2, NULL, LV_ALIGN_CENTER, 120, 60);
+
+	// draw a horizontal line to separate them
+	lv_obj_t *line1 = lv_line_create(lv_scr_act(), NULL);
+	static lv_point_t line1_points[] = {{240, 120}, {480, 120}};
+	lv_line_set_points(line1, line1_points, 2);
+	lv_line_set_style(line1, &lv_style_plain_color);
+
+	while (true) {
+		// screen is 480x240 wxh
+
+		if (screen::touch_status().touch_status == TOUCH_PRESSED) {
+			double x = screen::touch_status().x;
+			double y = screen::touch_status().y;
+			if (x < 120) {
+				if (y < 120) {
+					selectedAuton = OFFENSIVE;
+					break;
+				} else {
+					selectedAuton = DEFENSIVE;
+					break;
+				}
+			} else if (x < 240) {
+				if (y < 120) {
+					selectedAuton = DEFENSIVE;
+					break;
+				} else {
+					selectedAuton = OFFENSIVE;
+					break;
+				}
+			} else if (y < 120) {
+				selectedAuton = SKILLS;
+				break;
+			} else {
+				selectedAuton = NONE;
+				break;
+			}
+		}
+
+		delay(20);
+	}
+
+	// clear screen
+	lv_obj_clean(lv_scr_act());
+	// text in the middle displaying what auton was selected
+	lv_obj_t *label3 = lv_label_create(lv_scr_act(), NULL);
+	lv_label_set_text(label3, "SELECTED AUTON");
+	lv_obj_align(label3, NULL, LV_ALIGN_CENTER, 0, -60);
+	lv_obj_t *label4 = lv_label_create(lv_scr_act(), NULL);
+	switch (selectedAuton) {
+		case OFFENSIVE:
+			lv_label_set_text(label4, "[ OFFENSIVE ]");
+			break;
+		case DEFENSIVE:
+			lv_label_set_text(label4, "[ DEFENSIVE ]");
+			break;
+		case SKILLS:
+			lv_label_set_text(label4, "[ SKILLS ]");
+			break;
+		case NONE:
+			lv_label_set_text(label4, "[ NONE ]");
+			break;
+	}
+	lv_obj_align(label4, NULL, LV_ALIGN_CENTER, 0, 0);
 }
 
 void screen_function()
 {
+	auton_selector();
 	while (true)
 	{
 		delay(20);
@@ -80,9 +161,9 @@ void screen_function()
 
 void initialize()
 {
+	Task screen_task(screen_function);
 	chassis.calibrate();
 	master.rumble(".-");
-	Task screen_task(screen_function);
 }
 
 void disabled()
@@ -121,6 +202,12 @@ void auton_close()
 	chassis.waitUntilDone();
 	wings.set_value(true);
 	chassis.moveToPose(32, 18, 290, 2000, {.maxSpeed = 40}); // get match load
+
+	//! still incomplete
+}
+
+void auton_far() {
+	chassis.setPose({113, 7, 0});
 }
 
 void auton_skills()
@@ -201,8 +288,20 @@ void auton_skills()
 
 void autonomous()
 {
-	// auton_skills();
-	auton_close();
+	switch (selectedAuton)
+	{
+	case OFFENSIVE:
+		auton_far();
+		break;
+	case DEFENSIVE:
+		auton_close();
+		break;
+	case SKILLS:
+		auton_skills();
+		break;
+	case NONE:
+		break;
+	}
 }
 
 void opcontrol()
