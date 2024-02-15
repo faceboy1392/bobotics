@@ -44,6 +44,18 @@ lemlib::ControllerSettings angularController{
 	500,   // largeErrorTimeout
 	0	   // slew rate
 };
+// lemlib::ControllerSettings angularController{
+// 	1.6,  // kP
+// 	0.00,  // kI
+// 	5.00, // kD
+// 	3,	   // anti wind up?
+// 	0.5,   // smallErrorRange
+// 	250,   // smallErrorTimeout
+// 	1.5,   // largeErrorRange
+// 	500,   // largeErrorTimeout
+// 	0	   // slew rate
+// };
+
 
 lemlib::Chassis chassis(drivetrain, linearController, angularController, sensors);
 
@@ -65,7 +77,7 @@ enum AutonType
 	NONE
 };
 
-AutonType selectedAuton = SKILLS;
+AutonType selectedAuton = OFFENSIVE;
 
 void auton_selector()
 {
@@ -179,7 +191,12 @@ void auton_close()
 {
 	chassis.setPose({31, 7, 0});
 	// score preload
-	chassis.moveToPoint(10, 29, 1800); // in front of goal
+	chassis.moveToPoint(31, 10, 400);
+	// chassis.waitUntilDone();
+	// wings.set_value(true);
+	chassis.moveToPoint(10, 31, 1800); // in front of goal
+	// chassis.waitUntilDone();
+	// wings.set_value(false);
 	chassis.turnTo(10, 60, 500);	   // turn to goal
 	chassis.waitUntilDone();
 	intake.move(-127); // outtake
@@ -187,27 +204,64 @@ void auton_close()
 	intake.brake();
 	chassis.turnTo(10, 60, 500, false);		 // turn around
 	chassis.moveToPoint(10, 44, 500, false); // reverse into goal
-	chassis.moveToPoint(12, 38, 500);		 // back away from goal
+	chassis.moveToPoint(12, 36, 500);		 // back away from goal
 	chassis.turnTo(30, 38, 500);			 // turn from wall
 	chassis.waitUntilDone();
-	chassis.moveToPose(48, 64, 0, 5000, {.maxSpeed = 70}); // move to middle triball
+	chassis.moveToPose(48, 64, 0, 5000); // move to middle triball
 	delay(500);
 	intake.move(127); // intake
 	chassis.waitUntilDone();
 	delay(500);
 	intake.brake();
-	chassis.moveToPoint(48, 64, 500); // reverse a bit
+	chassis.moveToPoint(48, 60, 500); // reverse a bit
 	chassis.turnTo(48, 0, 800);
-	chassis.moveToPose(24, 22, 230, 3000); // move to corner
+	chassis.moveToPose(22, 22, 230, 3000); // move to corner
 	chassis.waitUntilDone();
 	wings.set_value(true);
-	chassis.moveToPose(32, 18, 290, 2000, {.maxSpeed = 40}); // get match load
-
-	//! still incomplete
+	chassis.moveToPose(32, 16, 110, 2000); // get match load
+	chassis.waitUntilDone();
+	wings.set_value(false);
+	intake.move(-127);
+	delay(500);
+	intake.brake();
+	chassis.turnTo(32, 32, 800);
+	chassis.moveToPoint(61, 10, 1500, false);
+	delay(1000);
+	wings.set_value(true);
 }
 
 void auton_far() {
-	chassis.setPose({113, 7, 0});
+	chassis.setPose({16, 13, 270});
+	intake.move(127);
+	chassis.moveToPoint(7, 13, 700);
+	chassis.moveToPose(67, 49, 180, 4000, {.forwards = false, .minSpeed = 90});
+	chassis.waitUntil(10);
+	intake.brake();
+	chassis.waitUntil(30);
+	wings.set_value(true);
+	chassis.waitUntil(52);
+	wings.set_value(false);
+	chassis.waitUntilDone();
+	chassis.moveToPose(28, 55, 90, 3000);
+	chassis.turnTo(60, 60, 800);
+	chassis.waitUntilDone();
+	chassis.moveToPoint(52, 65, 1200);
+	intake.move(-127);
+	chassis.waitUntilDone();
+	intake.brake();
+	chassis.moveToPoint(30, 55, 1500, false);
+	chassis.moveToPoint(9, 51, 2000);
+	delay(500);
+	intake.move(127);
+	chassis.moveToPoint(12, 72, 1500);
+	chassis.waitUntilDone();
+	chassis.moveToPoint(52, 72, 2000);
+	delay(500);
+	intake.move(-127);
+	chassis.waitUntilDone();
+	intake.brake();
+	chassis.moveToPoint(24, 65, 1500, false);
+	
 }
 
 void auton_skills()
@@ -320,10 +374,6 @@ void opcontrol()
 		if (master.get_digital_new_press(DIGITAL_B))
 			hangState = !hangState;
 
-		if (master.get_digital_new_press(DIGITAL_LEFT))
-			chassis.turnTo(-100, 0, 5000);
-		if (master.get_digital_new_press(DIGITAL_RIGHT))
-			chassis.turnTo(0, -100, 5000);
 
 		wings.set_value(wingState);
 		hang.set_value(hangState);
